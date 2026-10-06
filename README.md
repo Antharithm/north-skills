@@ -43,6 +43,8 @@ cd north-checkout-app && npm install
 npm run dev
 ```
 
+Open http://localhost:3000, click **Checkout**, and pay with North's Sandbox test card **`4111 1111 1111 1111`** (any future expiry like `12/30`, any CVV like `123`, any ZIP like `12345`). Amex: `3700 000000 00002`. Nothing is charged in Sandbox.
+
 Both paths write the same code. For an existing project, the installer detects Next.js or Express, finds `app/` or `src/app/`, adds North's files next to yours, and **never overwrites a file**.
 
 ### Update

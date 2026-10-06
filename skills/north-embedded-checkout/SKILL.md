@@ -40,7 +40,7 @@ node <skill-dir>/scripts/scaffold.mjs --framework nextjs --mode new --name my-sh
 node <skill-dir>/scripts/scaffold.mjs --framework express --mode existing --dir .
 ```
 
-It never overwrites files and never touches secret values. Show the user what it wrote, then do its "Next" steps with them: `npm install`, ask them to paste their Sandbox keys into `.env.local` / `.env` themselves, then `npm run dev`. For an existing project, continue with steps 3-5 below to wire it in.
+It never overwrites files and never touches secret values. Show the user what it wrote, then do its "Next" steps with them: `npm install`, ask them to paste their Sandbox keys into `.env.local` / `.env` themselves, then `npm run dev`, then pay with North's Sandbox test card `4111 1111 1111 1111` (any future expiry like 12/30, any CVV like 123, any ZIP like 12345) and expect "Payment confirmed". For an existing project, continue with steps 3-5 below to wire it in.
 
 ### No account yet
 

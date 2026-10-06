@@ -88,6 +88,12 @@ export default function Home() {
             <strong>{money(subtotal)}</strong>
           </div>
           <NorthCheckout key={attempt} items={items} onMount={() => setCheckingOut(true)} />
+          {/* Sandbox only: test cards from North's Form integration guide. Remove before going live. */}
+          <div className="test-card">
+            <strong>Sandbox test card</strong>
+            <code>4111 1111 1111 1111</code>
+            <span>Any future expiry (e.g. 12/30) · any CVV (123) · any ZIP (12345). Amex: 3700 000000 00002</span>
+          </div>
           <p className="fine-print">🔒 Card details go straight into North&apos;s secure form. They never touch this site.</p>
         </aside>
       </div>

@@ -61,6 +61,9 @@ p { margin: 0; }
 .lines li { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); }
 .total-row { display: flex; justify-content: space-between; align-items: baseline; padding-top: 12px; border-top: 1px solid var(--border); font-size: 1.1rem; }
 .fine-print { font-size: 0.8rem; color: var(--muted); }
+.test-card { display: grid; gap: 2px; padding: 10px 12px; border: 1px dashed var(--border); border-radius: 10px; font-size: 0.8rem; color: var(--muted); }
+.test-card strong { color: var(--text); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.test-card code { font: 600 1rem ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text); letter-spacing: 0.04em; user-select: all; }
 
 .north-checkout { display: grid; gap: 10px; }
 .north-pay-button { width: 100%; padding: 13px 16px; border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-text); font: inherit; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }

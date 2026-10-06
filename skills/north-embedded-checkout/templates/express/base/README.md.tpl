@@ -8,7 +8,14 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000, add items, click **Checkout**, pay with a Sandbox test card.
+Open http://localhost:3000, add items, click **Checkout**, and pay with North's Sandbox test card:
+
+| Card | Expiry | CVV | ZIP |
+|------|--------|-----|-----|
+| `4111 1111 1111 1111` (Visa) | any future date, e.g. `12/30` | any 3 digits, e.g. `123` | any 5 digits, e.g. `12345` |
+| `3700 000000 00002` (Amex) | any future date | any 4 digits | any 5 digits |
+
+Sandbox payments are mock requests: nothing is charged.
 
 | File | Job |
 |------|-----|

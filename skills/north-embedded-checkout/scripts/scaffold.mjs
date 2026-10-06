@@ -142,7 +142,7 @@ export function scaffold({ framework, mode, destDir }) {
     `Put your Sandbox credentials in ${envFile}. No North account yet? Sign up free at https://developer.north.com/register, then create a checkout at https://developer.north.com/dashboard/embedded-checkouts/designer`,
     ...report.todo,
     mode === "new"
-      ? "npm run dev"
+      ? "npm run dev, open http://localhost:3000, click Checkout, and pay with test card 4111 1111 1111 1111 (any future expiry, e.g. 12/30 · any CVV, e.g. 123 · any ZIP, e.g. 12345)"
       : framework === "nextjs"
         ? "Render <NorthCheckout items={...} /> where your checkout button is, and replace lib/north/catalog.ts with your prices"
         : "Add app.use(northRouter) before any express.json(), call northCheckout.start() from your checkout button, and replace src/north/catalog.ts with your prices",

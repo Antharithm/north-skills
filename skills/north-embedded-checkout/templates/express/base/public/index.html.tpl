@@ -32,6 +32,12 @@
           <p class="north-error" id="error" role="alert" hidden></p>
           <div id="north-checkout" class="north-form"></div>
         </div>
+        <!-- Sandbox only: test cards from North's Form integration guide. Remove before going live. -->
+        <div class="test-card">
+          <strong>Sandbox test card</strong>
+          <code>4111 1111 1111 1111</code>
+          <span>Any future expiry (e.g. 12/30) · any CVV (123) · any ZIP (12345). Amex: 3700 000000 00002</span>
+        </div>
         <p class="fine-print">🔒 Card details go straight into North's secure form. They never touch this site.</p>
       </aside>
     </div>

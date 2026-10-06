@@ -16,6 +16,8 @@
 
 **What does it cost?** Pricing isn't covered here. Fees and rates are disclosed during the merchant application, before you sign.
 
+**Is there a test card?** Yes, in Sandbox: `4111 1111 1111 1111` (Visa) or `3700 000000 00002` (Amex), any future expiry (e.g. 12/30), any CVV (123; 4 digits for Amex), any 5-digit ZIP. Sandbox payments are mock requests; nothing is charged.
+
 **Apple Pay?** Supported on most North integrations; enable and test it per North's docs.
 
 **Is there an MCP server?** Not covered here. These skills give your agent North's integration rules today.
