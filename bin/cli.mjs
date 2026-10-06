@@ -16,6 +16,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { spawn } from "node:child_process";
 import { banner, box, color as c, confirm, multiselect, select, text } from "./prompts.mjs";
 import { detectFramework, scaffold } from "../skills/north-embedded-checkout/scripts/scaffold.mjs";
 
@@ -59,6 +60,19 @@ const SKILLS = [
   { value: "north-doctor", label: "north-doctor", hint: "(Diagnose and fix a North integration. Finds…)" },
 ];
 
+const SIGNUP_URL = "https://developer.north.com/register";
+const DESIGNER_URL = "https://developer.north.com/dashboard/embedded-checkouts/designer";
+const CHECKOUTS_URL = "https://developer.north.com/dashboard/embedded-checkouts";
+
+/** Open a URL in the default browser. Best effort: failures are ignored, the URL is printed anyway. */
+function openUrl(url) {
+  const cmd = process.platform === "darwin" ? "open" : process.platform === "win32" ? "cmd" : "xdg-open";
+  const args = process.platform === "win32" ? ["/c", "start", "", url] : [url];
+  try {
+    spawn(cmd, args, { stdio: "ignore", detached: true }).on("error", () => {}).unref();
+  } catch {}
+}
+
 // ---- Flags (non-interactive) -------------------------------------------------
 
 function parseFlags(argv) {
@@ -82,6 +96,7 @@ Usage
 Flags (any you omit are asked interactively)
   --product    embedded-checkout
   --skills     learn-north,north-embedded-checkout,north-doctor (default: all)
+  --account    yes | no   (do you already have a North developer account?)
   --agents     claude-code,cursor,codex,gemini-cli,github-copilot,windsurf,antigravity
   --framework  nextjs | express
   --mode       new | existing
@@ -139,6 +154,35 @@ async function main() {
   if (!product) {
     need("product");
     product = await select({ message: "What do you want to build with?", options: PRODUCTS });
+  }
+
+  // 1b. Account: never assume one exists
+  let hasAccount = flags.account === "yes" ? true : flags.account === "no" ? false : undefined;
+  if (hasAccount === undefined && interactive) {
+    hasAccount =
+      (await select({
+        message: "Do you have a North developer account?",
+        options: [
+          { value: "yes", label: "Yes, I have my Sandbox keys" },
+          { value: "no", label: "No, I need to sign up", hint: "free, no paperwork for Sandbox" },
+        ],
+      })) === "yes";
+  }
+  if (hasAccount === false) {
+    console.log(
+      "\n" +
+        box("Get your North Sandbox keys", [
+          `1. Sign up (free)      ${c.cyan(SIGNUP_URL)}`,
+          `2. Create a checkout   ${c.cyan(DESIGNER_URL)}`,
+          `   Set Domain to the address your page runs on, then Save Checkout.`,
+          `3. Copy its keys       ${c.cyan(CHECKOUTS_URL)}`,
+          `   private key, checkout ID, profile ID → your env file`,
+          "",
+          c.dim("Carry on here: the code works as soon as the keys are in."),
+        ]) +
+        "\n",
+    );
+    if (interactive && (await confirm({ message: "Open the sign-up page in your browser?" }))) openUrl(SIGNUP_URL);
   }
 
   // 2. Skills (all selected by default)

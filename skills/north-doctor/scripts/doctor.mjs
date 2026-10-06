@@ -367,7 +367,7 @@ export async function live(root, origin) {
 
   const missing = [["NORTH_CHECKOUT_PRIVATE_KEY", key], ["NORTH_CHECKOUT_ID", checkoutId], ["NORTH_PROFILE_ID", profileId]].filter(([, v]) => !v).map(([n]) => n);
   if (missing.length) {
-    bad("Credentials", `missing in .env / .env.local: ${missing.join(", ")}`, "Copy them from developer.north.com → Checkout Designer → your checkout.");
+    bad("Credentials", `missing in .env / .env.local: ${missing.join(", ")}`, "Copy them from your checkout at https://developer.north.com/dashboard/embedded-checkouts (no account yet? https://developer.north.com/register).");
     return results;
   }
   ok("Credentials", "all three present (values not shown)");

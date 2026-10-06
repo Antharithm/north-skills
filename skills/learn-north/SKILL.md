@@ -19,7 +19,7 @@ allowed-tools: Read Grep Glob
 1. What North is: a payments company whose developer platform (North Developer, developer.north.com) lets software companies embed payments and merchant onboarding in their own product.
 2. What they can build today with these skills: **Embedded Checkout** via `@north-embedded-checkout`.
 3. What else North offers (skills coming soon): Payment API, Merchant Boarding API, Recurring Billing API, Business & Merchant Reporting APIs, semi-integrated card-present.
-4. How to start: free account at developer.north.com → Checkout Designer → Sandbox credentials in `.env.local` → `/north-embedded-checkout`.
+4. How to start: free account at https://developer.north.com/register → create a checkout in the Form Designer (https://developer.north.com/dashboard/embedded-checkouts/designer) → Sandbox credentials in `.env.local` → `/north-embedded-checkout`. Already have an account? https://developer.north.com/login
 
 Keep it conversational, an onboarding tour rather than a docs dump. End by asking what they want to build.
 

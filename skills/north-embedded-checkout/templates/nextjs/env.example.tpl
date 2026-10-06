@@ -1,5 +1,7 @@
 # North Embedded Checkout - Sandbox credentials
-# Find them at developer.north.com -> Checkout Designer -> your checkout.
+# No account yet? Sign up free: https://developer.north.com/register
+# Create a checkout: https://developer.north.com/dashboard/embedded-checkouts/designer
+# Then open it from https://developer.north.com/dashboard/embedded-checkouts and copy the three values below.
 # Server-only. Never prefix these with NEXT_PUBLIC_ or EXPO_PUBLIC_.
 
 # Private key: sent as `Authorization: Bearer ...` on every server -> North call,

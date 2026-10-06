@@ -39,7 +39,7 @@ Then:
 
 ```bash
 cd north-checkout-app && npm install
-# put Sandbox credentials in .env.local (developer.north.com → Checkout Designer)
+# put Sandbox credentials in .env.local (see "Set your credentials" below)
 npm run dev
 ```
 
@@ -53,7 +53,9 @@ npx skills update -p -y
 
 ### Set your credentials
 
-Add your Sandbox credentials to `.env.local` (Next.js) or `.env` (Express). They stay on your server and are never needed in chat:
+No North account yet? [Sign up free](https://developer.north.com/register), then [create a checkout in the Form Designer](https://developer.north.com/dashboard/embedded-checkouts/designer). Already have one? [Log in](https://developer.north.com/login) and open [your checkouts](https://developer.north.com/dashboard/embedded-checkouts).
+
+Add the checkout's Sandbox credentials to `.env.local` (Next.js) or `.env` (Express). They stay on your server and are never needed in chat:
 
 ```bash
 NORTH_CHECKOUT_PRIVATE_KEY=
@@ -149,7 +151,8 @@ Frameworks: Next.js ✅ · Express ✅ · React Native / Expo (coming soon) · i
 
 ## Documentation
 
-- [North Developer](https://developer.north.com)
+- [North Developer](https://developer.north.com) · [Sign up](https://developer.north.com/register) · [Your checkouts](https://developer.north.com/dashboard/embedded-checkouts)
+- [Embedded Checkout Form integration guide](https://developer.north.com/products/online/embedded-checkout/form-integration-guide)
 
 ## License
 

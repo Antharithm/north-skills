@@ -27,10 +27,11 @@ North Embedded Checkout puts North's hosted payment form (an iframe) on your pag
 
 This is the second half of `npx skills add`: that command installs the skills; this step writes the code. Ask these as **one short message** (use your question tool if you have one), with the detected answer pre-selected:
 
-1. **Which North product?** Embedded Checkout. Payment API, Merchant Boarding API, Recurring Billing API, Business & Merchant Reporting APIs and semi-integrated card-present are **(coming soon)**: say so and stop if they pick one.
-2. **New project or this existing one?** Default: existing if the folder has a `package.json`, otherwise new.
-3. **Which framework?** Next.js or Express. React Native / Expo and iOS (Swift) are **(coming soon)**. For an existing project, detect it first: `node <skill-dir>/scripts/scaffold.mjs --detect`.
-4. **Project folder name** (new projects only). Default `north-checkout-app`.
+1. **Do you have a North developer account with a Sandbox checkout?** "Yes, I have my keys" / "No, I need to sign up". Never assume. If no, give them the steps in "No account yet" below, and scaffold anyway: the code works as soon as the keys arrive.
+2. **Which North product?** Embedded Checkout. Payment API, Merchant Boarding API, Recurring Billing API, Business & Merchant Reporting APIs and semi-integrated card-present are **(coming soon)**: say so and stop if they pick one.
+3. **New project or this existing one?** Default: existing if the folder has a `package.json`, otherwise new.
+4. **Which framework?** Next.js or Express. React Native / Expo and iOS (Swift) are **(coming soon)**. For an existing project, detect it first: `node <skill-dir>/scripts/scaffold.mjs --detect`.
+5. **Project folder name** (new projects only). Default `north-checkout-app`.
 
 Then run the scaffold script that ships next to this file (`<skill-dir>` is the folder containing this SKILL.md, e.g. `.claude/skills/north-embedded-checkout` or `.agents/skills/north-embedded-checkout`):
 
@@ -39,7 +40,19 @@ node <skill-dir>/scripts/scaffold.mjs --framework nextjs --mode new --name my-sh
 node <skill-dir>/scripts/scaffold.mjs --framework express --mode existing --dir .
 ```
 
-It never overwrites files and never touches secret values. Show the user what it wrote, then do its "Next" steps with them: `npm install`, ask them to paste their Sandbox keys into `.env.local` / `.env` themselves (developer.north.com → Checkout Designer), then `npm run dev`. For an existing project, continue with steps 3-5 below to wire it in.
+It never overwrites files and never touches secret values. Show the user what it wrote, then do its "Next" steps with them: `npm install`, ask them to paste their Sandbox keys into `.env.local` / `.env` themselves, then `npm run dev`. For an existing project, continue with steps 3-5 below to wire it in.
+
+### No account yet
+
+Give these as clickable links, in order:
+
+1. **Sign up (free):** https://developer.north.com/register. No business paperwork needed for Sandbox.
+2. **Create a checkout** in the Form Designer: https://developer.north.com/dashboard/embedded-checkouts/designer. Name it, style it, set **Domain** to the exact origin your page runs on (a tunnel URL such as ngrok works for local development), and click **Save Checkout**.
+3. **Get the keys:** open the checkout from https://developer.north.com/dashboard/embedded-checkouts and copy its private key, checkout ID and profile ID into `.env.local` (Next.js) or `.env` (Express). The user pastes them into the file themselves, never into chat.
+
+Already have an account: https://developer.north.com/login → https://developer.north.com/dashboard/embedded-checkouts.
+
+Docs: Form integration guide https://developer.north.com/products/online/embedded-checkout/form-integration-guide
 
 ## The flow
 

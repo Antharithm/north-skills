@@ -2,8 +2,8 @@
 
 ## Sandbox
 
-1. Create a free account at developer.north.com.
-2. In **Checkout Designer**, create a Form checkout. Copy its **private key**, **checkout id**, and **profile id** into the project env file.
+1. Create a free account: https://developer.north.com/register (or log in: https://developer.north.com/login).
+2. Create a Form checkout in the Form Designer: https://developer.north.com/dashboard/embedded-checkouts/designer. Then open it from https://developer.north.com/dashboard/embedded-checkouts and copy its **private key**, **checkout id**, and **profile id** into the project env file.
 3. Leave Domain empty for a first `localhost` run, or set it to your tunnel URL. Once set, it must match.
 4. Pay with the Sandbox test cards listed in North's docs. Don't hard-code card numbers in the app.
 5. Expect `/verify` to return `Approved` and the order to become `paid`. The webhook needs an allowlisted public URL; until then, test it with the signed-request snippet in `Webhooks.md`.

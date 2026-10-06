@@ -2,11 +2,11 @@
 
 ## 1. Developer account (free)
 
-Sign up at **developer.north.com**. You get the docs, Postman collections, sample apps, and Sandbox access. No business paperwork is needed to start building.
+Sign up at **https://developer.north.com/register** (log in: https://developer.north.com/login). You get the docs, Postman collections, sample apps, and Sandbox access. No business paperwork is needed to start building.
 
 ## 2. Sandbox checkout
 
-1. Open **Checkout Designer** and create a Form checkout.
+1. Open the **Form Designer** (https://developer.north.com/dashboard/embedded-checkouts/designer) and create a Form checkout. Your checkouts are listed at https://developer.north.com/dashboard/embedded-checkouts.
 2. Style it (theme, logo, fields) in the Designer, not in code.
 3. Copy the **private key**, **checkout id** and **profile id** into your server env file (`NORTH_CHECKOUT_PRIVATE_KEY`, `NORTH_CHECKOUT_ID`, `NORTH_PROFILE_ID`).
 4. **Domain:** leave it empty for a first localhost run, or set it to the exact origin that serves your checkout page. Once set, it must match.
@@ -25,6 +25,13 @@ To take real payments you apply for a merchant account from the developer portal
 ## 4. Going live
 
 Production credentials (same env names), production Domain in Checkout Designer, production webhook URL allowlisted, a real database for orders and webhook dedupe. See `@north-embedded-checkout` → `references/Testing.md`.
+
+## Docs
+
+- Embedded Checkout overview: https://developer.north.com/products/online/embedded-checkout
+- Form integration guide (what these skills build): https://developer.north.com/products/online/embedded-checkout/form-integration-guide
+- Fields integration guide (your own field layout): https://developer.north.com/products/online/embedded-checkout/fields-integration-guide
+- Post integration guide: https://developer.north.com/products/online/embedded-checkout/post-integration-guide
 
 ## Getting help
 

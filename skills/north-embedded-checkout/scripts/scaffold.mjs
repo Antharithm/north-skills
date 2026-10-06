@@ -139,7 +139,7 @@ export function scaffold({ framework, mode, destDir }) {
   report.envFile = envFile;
   report.nextSteps = [
     cd + install,
-    `Put your Sandbox credentials in ${envFile} (developer.north.com → Checkout Designer)`,
+    `Put your Sandbox credentials in ${envFile}. No North account yet? Sign up free at https://developer.north.com/register, then create a checkout at https://developer.north.com/dashboard/embedded-checkouts/designer`,
     ...report.todo,
     mode === "new"
       ? "npm run dev"
