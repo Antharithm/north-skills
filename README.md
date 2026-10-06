@@ -144,7 +144,8 @@ Frameworks: Next.js ✅ · Express ✅ · React Native / Expo (coming soon) · i
 
 ## Architecture
 
-- **Zero dependencies:** Node built-ins only.
+- **Zero runtime dependencies:** Node built-ins only. The tools are plain `.mjs` with `// @ts-check` + JSDoc types, so they run with `node file.mjs` (no build step) and are still type-checked strictly by `tsc` in `npm test`.
+- **The code you get is TypeScript:** starter templates are `.ts` / `.tsx` (stored as `.tpl`; `.gitattributes` tells GitHub what they are).
 - **Templates live inside the skill** (`skills/north-embedded-checkout/templates`, stored as `*.tpl` so your TypeScript build never compiles them), so `npx skills add` alone is enough to scaffold.
 - **One scaffold script** (`skills/north-embedded-checkout/scripts/scaffold.mjs`) used by both the agent and `create-north-app`.
 - **Same agent paths as skills.sh:** `.claude/skills`, `.agents/skills`, `.windsurf/skills`.

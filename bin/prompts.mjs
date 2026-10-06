@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * prompts.mjs - tiny zero-dependency terminal prompts (select, multiselect, text, confirm).
  *
@@ -7,6 +8,7 @@
 
 import readline from "node:readline";
 
+/** @type {Record<"dim" | "bold" | "cyan" | "green" | "yellow" | "red", (s: string) => string>} */
 const c = {
   dim: (s) => `\x1b[2m${s}\x1b[22m`,
   bold: (s) => `\x1b[1m${s}\x1b[22m`,
@@ -25,12 +27,19 @@ function cancel() {
 }
 
 /** Render a list in place; returns the number of lines drawn so the next render can erase them. */
+/** @param {string[]} lines @param {number} previous */
 function draw(lines, previous) {
   if (previous > 0) out.write(`\x1b[${previous}A\x1b[J`);
   out.write(lines.join("\n") + "\n");
   return lines.length;
 }
 
+/** @typedef {{ value: string, label: string, hint?: string, disabled?: boolean }} Option */
+
+/**
+ * @param {{ message: string, options: Option[], multiple?: boolean, initial?: string[] }} opts
+ * @returns {Promise<string | string[]>}
+ */
 function listPrompt({ message, options, multiple = false, initial = [] }) {
   return new Promise((resolve) => {
     const firstEnabled = options.findIndex((o) => !o.disabled);
@@ -59,6 +68,7 @@ function listPrompt({ message, options, multiple = false, initial = [] }) {
       drawn = draw(lines, drawn);
     };
 
+    /** @param {number} step */
     const move = (step) => {
       for (let n = 0; n < options.length; n++) {
         cursor = (cursor + step + options.length) % options.length;
@@ -66,6 +76,7 @@ function listPrompt({ message, options, multiple = false, initial = [] }) {
       }
     };
 
+    /** @param {string} _str @param {{ name?: string, ctrl?: boolean }} [key] */
     const onKey = (_str, key = {}) => {
       error = "";
       if (key.ctrl && key.name === "c") return cancel();
@@ -101,9 +112,15 @@ function listPrompt({ message, options, multiple = false, initial = [] }) {
   });
 }
 
-export const select = (opts) => listPrompt({ ...opts, multiple: false });
-export const multiselect = (opts) => listPrompt({ ...opts, multiple: true });
+/** @param {{ message: string, options: Option[] }} opts @returns {Promise<string>} */
+export const select = (opts) => /** @type {Promise<string>} */ (listPrompt({ ...opts, multiple: false }));
+/** @param {{ message: string, options: Option[], initial?: string[] }} opts @returns {Promise<string[]>} */
+export const multiselect = (opts) => /** @type {Promise<string[]>} */ (listPrompt({ ...opts, multiple: true }));
 
+/**
+ * @param {{ message: string, initial?: string, validate?: (value: string) => string | undefined }} opts
+ * @returns {Promise<string>}
+ */
 export function text({ message, initial = "", validate }) {
   return new Promise((resolve) => {
     const ask = () => {
@@ -124,6 +141,7 @@ export function text({ message, initial = "", validate }) {
   });
 }
 
+/** @param {{ message: string, initial?: boolean }} opts @returns {Promise<boolean>} */
 export async function confirm({ message, initial = true }) {
   const answer = await text({ message: `${message} ${c.dim(initial ? "[Y/n]" : "[y/N]")}` });
   if (!answer) return initial;
@@ -132,6 +150,7 @@ export async function confirm({ message, initial = true }) {
 
 // ---- Banner ---------------------------------------------------------------------
 
+/** @type {Record<string, string[]>} */
 const FONT = {
   N: ["█   █", "██  █", "█ █ █", "█  ██", "█   █"],
   O: [" ███ ", "█   █", "█   █", "█   █", " ███ "],
@@ -146,6 +165,7 @@ export function banner(word = "NORTH") {
   const rows = 5;
   const grid = Array.from({ length: rows }, (_, r) => [...word].map((ch) => FONT[ch][r] + " ").join(""));
   const width = grid[0].length + 1;
+  /** @param {number} r @param {number} c */
   const filled = (r, c) => r >= 0 && r < rows && grid[r][c] === "█";
   const shades = [255, 251, 248, 245, 242];
   const lines = [];
@@ -162,7 +182,9 @@ export function banner(word = "NORTH") {
 }
 
 /** A rounded box with a title, like an installation summary. */
+/** @param {string} title @param {string[]} bodyLines */
 export function box(title, bodyLines) {
+  /** @param {string} s */
   const strip = (s) => s.replace(/\x1b\[[0-9;]*m/g, "");
   const inner = Math.max(strip(title).length + 4, ...bodyLines.map((l) => strip(l).length + 2));
   const top = `◇  ${c.bold(title)} ${"─".repeat(Math.max(0, inner - strip(title).length - 1))}╮`;

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-check
 /**
  * test-doctor.mjs - every north-doctor check must (a) stay quiet on the clean starters
  * and (b) catch its own planted bug. Each case scaffolds a fresh starter, breaks one
@@ -18,6 +19,7 @@ fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
 
 let n = 0;
+/** Scaffold a clean starter in its own git repo. @param {"nextjs" | "express"} framework */
 function fresh(framework) {
   const dir = path.join(OUT, `${framework}-${++n}`);
   scaffold({ framework, mode: "new", destDir: dir });
@@ -25,6 +27,7 @@ function fresh(framework) {
   return dir;
 }
 
+/** @param {string} dir @param {string} file @param {string | RegExp} find @param {string} replace */
 function edit(dir, file, find, replace) {
   const p = path.join(dir, file);
   const before = fs.readFileSync(p, "utf8");
@@ -33,12 +36,14 @@ function edit(dir, file, find, replace) {
   fs.writeFileSync(p, after);
 }
 
+/** @param {string} dir @param {string} file @param {string} body */
 function write(dir, file, body) {
   fs.mkdirSync(path.dirname(path.join(dir, file)), { recursive: true });
   fs.writeFileSync(path.join(dir, file), body);
 }
 
 const N = "components/north/NorthCheckout.tsx";
+/** @type {[id: string, framework: "nextjs" | "express" | "expo", mutate: (dir: string) => void][]} */
 const CASES = [
   // Secrets
   ["ND001", "nextjs", (d) => fs.appendFileSync(path.join(d, ".env.local"), "NEXT_PUBLIC_NORTH_CHECKOUT_PRIVATE_KEY=abc\n")],
@@ -96,13 +101,14 @@ function expoProject() {
 }
 
 let failed = 0;
+/** @param {string} msg */
 const fail = (msg) => {
   failed++;
   console.log(`FAIL ${msg}`);
 };
 
 // Clean starters: no findings at all.
-for (const fw of ["nextjs", "express"]) {
+for (const fw of /** @type {const} */ (["nextjs", "express"])) {
   const { findings } = analyze(fresh(fw));
   if (findings.length) fail(`clean ${fw} has findings: ${findings.map((f) => `${f.id} ${f.file}:${f.line}`).join(", ")}`);
   else console.log(`ok   clean ${fw}: 0 findings`);
@@ -115,7 +121,7 @@ for (const [id, fw, mutate] of CASES) {
   try {
     mutate(dir);
   } catch (err) {
-    fail(`${id} (${fw}): ${err.message}`);
+    fail(`${id} (${fw}): ${err instanceof Error ? err.message : err}`);
     continue;
   }
   const ids = analyze(dir).findings.map((f) => f.id);

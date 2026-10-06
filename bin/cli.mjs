@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-check
 /**
  * create-north-app - one command to start building with North.
  *
@@ -25,7 +26,9 @@ const VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf
 
 // ---- What the installer offers ----------------------------------------------
 
-/** North products. Only Embedded Checkout ships today; the rest are listed so people know they are coming. */
+/** @typedef {import("./prompts.mjs").Option} Option */
+
+/** North products. Only Embedded Checkout ships today; the rest are listed so people know they are coming. @type {Option[]} */
 const PRODUCTS = [
   { value: "embedded-checkout", label: "Embedded Checkout", hint: "hosted payment form, PCI-light" },
   { value: "payment-api", label: "Payment API", hint: "(coming soon)", disabled: true },
@@ -35,7 +38,7 @@ const PRODUCTS = [
   { value: "card-present", label: "Semi-integrated card-present", hint: "(coming soon)", disabled: true },
 ];
 
-/** Agent -> project skills folder. Paths match the skills.sh CLI so both installers agree. */
+/** Agent -> project skills folder. Paths match the skills.sh CLI so both installers agree. @type {(Option & { dir: string })[]} */
 const AGENTS = [
   { value: "claude-code", label: "Claude Code", dir: ".claude/skills" },
   { value: "cursor", label: "Cursor", dir: ".agents/skills" },
@@ -46,6 +49,7 @@ const AGENTS = [
   { value: "antigravity", label: "Antigravity", dir: ".agents/skills" },
 ];
 
+/** @type {Option[]} */
 const FRAMEWORKS = [
   { value: "nextjs", label: "Next.js", hint: "App Router, TypeScript" },
   { value: "express", label: "Express", hint: "Node + TypeScript, plain HTML front end" },
@@ -53,7 +57,7 @@ const FRAMEWORKS = [
   { value: "swift", label: "iOS (Swift)", hint: "(coming soon)", disabled: true },
 ];
 
-/** Skills offered, in install order. Descriptions come from each SKILL.md, shortened. */
+/** Skills offered, in install order. Descriptions come from each SKILL.md, shortened. @type {Option[]} */
 const SKILLS = [
   { value: "learn-north", label: "learn-north", hint: "(Learn about North and payments. Invoked without…)" },
   { value: "north-embedded-checkout", label: "north-embedded-checkout", hint: "(Build or change North Embedded Checkout. Sets up…)" },
@@ -65,6 +69,7 @@ const DESIGNER_URL = "https://developer.north.com/dashboard/embedded-checkouts/d
 const CHECKOUTS_URL = "https://developer.north.com/dashboard/embedded-checkouts";
 
 /** Open a URL in the default browser. Best effort: failures are ignored, the URL is printed anyway. */
+/** @param {string} url */
 function openUrl(url) {
   const cmd = process.platform === "darwin" ? "open" : process.platform === "win32" ? "cmd" : "xdg-open";
   const args = process.platform === "win32" ? ["/c", "start", "", url] : [url];
@@ -75,7 +80,9 @@ function openUrl(url) {
 
 // ---- Flags (non-interactive) -------------------------------------------------
 
+/** @param {string[]} argv @returns {Record<string, string | true>} */
 function parseFlags(argv) {
+  /** @type {Record<string, string | true>} */
   const flags = {};
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -105,14 +112,30 @@ Flags (any you omit are asked interactively)
   --yes        skip the final confirmation
 `;
 
-function pickValid(value, list, label) {
-  if (value === undefined) return undefined;
+/** Validate a flag value against a list. Exits on unknown or coming-soon values. @param {string | true} value @param {Option[]} list @param {string} label @returns {string} */
+function pick(value, list, label) {
   const hit = list.find((o) => o.value === value);
-  if (!hit) fail(`Unknown ${label} "${value}". Options: ${list.filter((o) => !o.disabled).map((o) => o.value).join(", ")}`);
+  if (!hit) return fail(`Unknown ${label} "${value}". Options: ${list.filter((o) => !o.disabled).map((o) => o.value).join(", ")}`);
   if (hit.disabled) fail(`${hit.label} is coming soon. Today the installer supports: ${list.filter((o) => !o.disabled).map((o) => o.label).join(", ")}.`);
-  return value;
+  return hit.value;
 }
 
+/** @param {string | true | undefined} value @param {Option[]} list @param {string} label @returns {string | undefined} */
+function pickValid(value, list, label) {
+  return value === undefined ? undefined : pick(value, list, label);
+}
+
+/** @param {Option[]} list @param {string} value */
+const labelOf = (list, value) => list.find((o) => o.value === value)?.label ?? value;
+
+/** @param {string} id */
+function agentById(id) {
+  const agent = AGENTS.find((x) => x.value === id);
+  if (!agent) return fail(`Unknown agent "${id}"`);
+  return agent;
+}
+
+/** @param {string} message @returns {never} */
 function fail(message) {
   console.error(c.red(`✖ ${message}`));
   process.exit(1);
@@ -120,17 +143,23 @@ function fail(message) {
 
 // ---- Skills -------------------------------------------------------------------
 
-/** Skills always overwrite: they are ours, and a re-run should refresh them to this version. */
-function installSkills(skills, agents, destDir, report) {
-  const dirs = [...new Set(agents.map((a) => AGENTS.find((x) => x.value === a).dir))];
+/**
+ * Skills always overwrite: they are ours, and a re-run should refresh them to this version.
+ * @param {string[]} skills @param {string[]} agents @param {string} destDir @returns {string[]} installed paths
+ */
+function installSkills(skills, agents, destDir) {
+  const dirs = [...new Set(agents.map((a) => agentById(a).dir))];
+  /** @type {string[]} */
+  const installed = [];
   for (const dir of dirs) {
     for (const skill of skills) {
       const to = path.join(destDir, dir, skill);
       fs.rmSync(to, { recursive: true, force: true });
       fs.cpSync(path.join(ROOT, "skills", skill), to, { recursive: true });
-      report.skills.push(path.relative(process.cwd(), to) || to);
+      installed.push(path.relative(process.cwd(), to) || to);
     }
   }
+  return installed;
 }
 
 // ---- Main ---------------------------------------------------------------------
@@ -141,6 +170,7 @@ async function main() {
   if (flags.version) return console.log(VERSION);
 
   const interactive = process.stdin.isTTY && process.stdout.isTTY;
+  /** @param {string} name */
   const need = (name) => {
     if (!interactive) fail(`--${name} is required when not running in a terminal. See --help.`);
   };
@@ -186,7 +216,7 @@ async function main() {
   }
 
   // 2. Skills (all selected by default)
-  let skills = typeof flags.skills === "string" ? flags.skills.split(",").map((x) => pickValid(x.trim(), SKILLS, "skill")) : undefined;
+  let skills = typeof flags.skills === "string" ? flags.skills.split(",").map((x) => pick(x.trim(), SKILLS, "skill")) : undefined;
   if (!skills) {
     skills = interactive
       ? await multiselect({ message: "Select skills to install", options: SKILLS, initial: SKILLS.map((x) => x.value) })
@@ -194,24 +224,27 @@ async function main() {
   }
 
   // 3. Agents
-  let agents = typeof flags.agents === "string" ? flags.agents.split(",").map((a) => pickValid(a.trim(), AGENTS, "agent")) : undefined;
+  let agents = typeof flags.agents === "string" ? flags.agents.split(",").map((a) => pick(a.trim(), AGENTS, "agent")) : undefined;
   if (!agents) {
     need("agents");
     agents = await multiselect({ message: "Which AI coding agent(s) do you use?", options: AGENTS, initial: ["claude-code"] });
   }
 
   // 4. New or existing
-  let mode = flags.mode;
-  if (mode && !["new", "existing"].includes(mode)) fail('--mode must be "new" or "existing"');
-  if (!mode) {
+  /** @type {"new" | "existing" | undefined} */
+  let mode;
+  if (flags.mode !== undefined) {
+    if (flags.mode !== "new" && flags.mode !== "existing") fail('--mode must be "new" or "existing"');
+    mode = flags.mode;
+  } else {
     need("mode");
-    mode = await select({
+    mode = /** @type {"new" | "existing"} */ (await select({
       message: "Start a new project or add North to an existing one?",
       options: [
         { value: "new", label: "New project", hint: "blank starter app with checkout wired in" },
         { value: "existing", label: "Existing project", hint: "add North's files next to your code" },
       ],
-    });
+    }));
   }
 
   // 5. Where
@@ -247,19 +280,23 @@ async function main() {
   if (!framework) {
     need("framework");
     const options = FRAMEWORKS.map((f) => (f.value === detected && !f.disabled ? { ...f, hint: "detected in your project" } : f));
-    framework = await select({ message: "Which framework?", options: detected && !FRAMEWORKS.find((f) => f.value === detected)?.disabled ? [options.find((o) => o.value === detected), ...options.filter((o) => o.value !== detected)] : options });
+    const first = options.find((o) => o.value === detected && !o.disabled);
+    framework = await select({ message: "Which framework?", options: first ? [first, ...options.filter((o) => o !== first)] : options });
   }
   if (mode === "existing" && detected && detected !== framework) {
     console.log(c.yellow(`! This looks like a ${detected} project, but you picked ${framework}. Continuing as ${framework}.`));
   }
 
   // 7. Summary + confirm
+  /** @param {string} p */
   const rel = (p) => "./" + (path.relative(process.cwd(), p) || ".");
+  /** @type {Map<string, string[]>} */
   const byDir = new Map();
   for (const a of agents) {
-    const { dir, label } = AGENTS.find((x) => x.value === a);
+    const { dir, label } = agentById(a);
     byDir.set(dir, [...(byDir.get(dir) ?? []), label]);
   }
+  /** @type {string[]} */
   const summary = [];
   for (const [dir, labels] of byDir) {
     for (const skill of skills) {
@@ -268,7 +305,7 @@ async function main() {
       summary.push("");
     }
   }
-  summary.push(`${c.bold("Starter")}  ${PRODUCTS.find((p) => p.value === product).label} · ${FRAMEWORKS.find((f) => f.value === framework).label} · ${mode === "new" ? "new project" : "existing project"}`);
+  summary.push(`${c.bold("Starter")}  ${labelOf(PRODUCTS, product)} · ${labelOf(FRAMEWORKS, framework)} · ${mode === "new" ? "new project" : "existing project"}`);
   summary.push(`  ${c.dim("→")} ${rel(destDir)}`);
   console.log("\n" + box("Installation Summary", summary) + "\n");
   if (!flags.yes && interactive && !(await confirm({ message: "Proceed with installation?" }))) {
@@ -281,16 +318,15 @@ async function main() {
   try {
     report = scaffold({ framework, mode, destDir });
   } catch (err) {
-    fail(err.message);
+    return fail(err instanceof Error ? err.message : String(err));
   }
-  report.skills = [];
-  installSkills(skills, agents, destDir, report);
+  const installed = installSkills(skills, agents, destDir);
 
   // 9. Report
   console.log(`\n${c.green("✔")} ${c.bold("Done.")}`);
   if (report.written.length) console.log(`\n${c.bold("Wrote")}\n` + report.written.map((f) => `  ${c.green("+")} ${f}`).join("\n"));
   if (report.skipped.length) console.log(`\n${c.bold("Kept your existing files")} ${c.dim("(not overwritten)")}\n` + report.skipped.map((f) => `  ${c.yellow("=")} ${f}`).join("\n"));
-  console.log(`\n${c.bold(`Installed ${skills.length} skill${skills.length === 1 ? "" : "s"}`)}\n` + report.skills.map((f) => `  ${c.green("✓")} ${f}`).join("\n"));
+  console.log(`\n${c.bold(`Installed ${skills.length} skill${skills.length === 1 ? "" : "s"}`)}\n` + installed.map((f) => `  ${c.green("✓")} ${f}`).join("\n"));
 
   const steps = [
     ...report.nextSteps,

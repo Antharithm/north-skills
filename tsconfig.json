@@ -1,0 +1,16 @@
+{
+  // Type-checks the zero-dependency JS tools (no build step: they still run as plain `node file.mjs`).
+  // The starter templates are type-checked separately by building generated apps (test-installer.sh --build).
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": true,
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node"],
+    "skipLibCheck": true
+  },
+  "include": ["bin/*.mjs", "skills/*/scripts/*.mjs", "scripts/*.mjs"]
+}

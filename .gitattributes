@@ -1,0 +1,9 @@
+# Starter templates are stored as *.tpl so a user's build never compiles the copies
+# inside .claude/skills. Tell GitHub what they really are (otherwise it guesses Smarty).
+*.ts.tpl    linguist-language=TypeScript
+*.tsx.tpl   linguist-language=TSX
+*.js.tpl    linguist-language=JavaScript
+*.html.tpl  linguist-language=HTML
+*.css.tpl   linguist-language=CSS
+*.json.tpl  linguist-language=JSON
+*.md.tpl    linguist-language=Markdown

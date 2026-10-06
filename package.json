@@ -10,11 +10,28 @@
     "type": "git",
     "url": "git+https://github.com/Antharithm/north-skills.git"
   },
-  "keywords": ["north", "payments", "embedded-checkout", "agent-skills", "claude-code", "cursor"],
-  "files": ["bin", "skills"],
-  "engines": { "node": ">=20" },
-  "scripts": {
-    "test": "sh scripts/test-installer.sh && node scripts/test-doctor.mjs"
+  "keywords": [
+    "north",
+    "payments",
+    "embedded-checkout",
+    "agent-skills",
+    "claude-code",
+    "cursor"
+  ],
+  "files": [
+    "bin",
+    "skills"
+  ],
+  "engines": {
+    "node": ">=20"
   },
-  "license": "MIT"
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "npm run typecheck && sh scripts/test-installer.sh && node scripts/test-doctor.mjs"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^5.9.3"
+  }
 }

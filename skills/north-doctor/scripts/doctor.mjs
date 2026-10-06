@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-check
 /**
  * doctor.mjs - check a North Embedded Checkout integration for known failure modes.
  *
@@ -21,7 +22,14 @@ import { fileURLToPath } from "node:url";
 
 // ---- Checks catalogue -------------------------------------------------------------
 
-/** id -> metadata. Severity: error (breaks money or security), warn (likely bug), info (worth knowing). */
+/** @typedef {"error" | "warn" | "info"} Severity */
+/** @typedef {{ sev: Severity, title: string, why: string, fix: string }} Check */
+/** @typedef {Check & { id: string, file: string, line: number, note?: string }} Finding */
+/** @typedef {{ rel: string, text: string, raw: string }} SourceFile  text = comments blanked; raw = as on disk */
+/** @typedef {{ ok: boolean, name: string, detail: string, fix?: string }} LiveResult */
+/** @typedef {{ framework: string, scanned: number, findings: Finding[], live?: LiveResult[] }} Report */
+
+/** id -> metadata. Severity: error (breaks money or security), warn (likely bug), info (worth knowing). @type {Record<string, Check>} */
 export const CHECKS = {
   ND001: { sev: "error", title: "Private key in a public env variable", why: "NEXT_PUBLIC_ / EXPO_PUBLIC_ / VITE_ / REACT_APP_ values are inlined into the browser or app bundle. Anyone can read the key, create sessions, and forge webhook signatures.", fix: "Rename to NORTH_CHECKOUT_PRIVATE_KEY (no public prefix), read it only in server code, and rotate the key in Checkout Designer if it was ever deployed." },
   ND002: { sev: "error", title: "Client code touches the private key or server-only North code", why: "Anything imported by a 'use client' component, a public/ script or a mobile screen ships to the user's device.", fix: "Call your own API route from the client; keep North's client, config and webhook modules server-only." },
@@ -56,6 +64,7 @@ const SKIP_DIRS = new Set(["node_modules", ".git", ".next", ".expo", ".vercel", 
 const CODE_EXT = /\.(ts|tsx|js|jsx|mjs|cjs|html|vue|svelte)$/;
 const ENV_FILE = /^\.env(\..+)?$/;
 
+/** @param {string} dir @param {string} root @param {SourceFile[]} [out] @returns {SourceFile[]} */
 function walk(dir, root, out = []) {
   let entries;
   try {
@@ -83,6 +92,7 @@ function walk(dir, root, out = []) {
  * Blank out comments (keeping newlines, so line numbers stay right) without touching
  * strings: "https://checkout.north.com" must survive, "// never request.json()" must not.
  */
+/** @param {string} text @returns {string} */
 export function stripComments(text) {
   let out = "";
   let i = 0;
@@ -110,6 +120,7 @@ export function stripComments(text) {
   return out;
 }
 
+/** @param {string} file @returns {any} */
 function readJson(file) {
   try {
     return JSON.parse(fs.readFileSync(file, "utf8"));
@@ -118,6 +129,7 @@ function readJson(file) {
   }
 }
 
+/** @param {string} dir @returns {"nextjs" | "expo" | "express" | "node" | "unknown"} */
 function detectFramework(dir) {
   const pkg = readJson(path.join(dir, "package.json"));
   const deps = { ...pkg?.dependencies, ...pkg?.devDependencies };
@@ -130,6 +142,7 @@ function detectFramework(dir) {
 const SERVER_DIRS = /(^|\/)(functions|server|backend|api)\//;
 
 /** Is this file shipped to the user's browser or device? */
+/** @param {SourceFile} f @param {string} framework */
 function isClientFile(f, framework) {
   if (ENV_FILE.test(path.basename(f.rel))) return false;
   if (/^\s*(['"])use client\1/m.test(f.text.slice(0, 400))) return true;
@@ -141,6 +154,7 @@ function isClientFile(f, framework) {
 
 // ---- Helpers ------------------------------------------------------------------------
 
+/** 1-based line of the first match, or null. @param {string} text @param {RegExp} re @returns {number | null} */
 function lineOf(text, re) {
   const m = re.exec(text);
   if (!m) return null;
@@ -149,29 +163,33 @@ function lineOf(text, re) {
 
 const NORTH_API = /checkout\.north\.com[^\n]*\/api|\/api\/sessions/;
 /** Makes HTTP requests to North's API (not just mentions the URL, e.g. in a trace or log string). */
+/** @param {string} t */
 const callsNorthApi = (t) => /checkout\.north\.com/.test(t) && /\/api\/sessions/.test(t) && /\bfetch\s*\(|axios|got\(|undici|https?\.request\(/.test(t);
 /** Scripts, tests and fixtures: they sign fake webhooks or poke the API on purpose. */
 const TOOLING = /(^|\/)(scripts|tests?|__tests__|fixtures|e2e|cypress|playwright)\/|\.(test|spec)\.[cm]?[jt]sx?$/;
 const HANDLES_WEBHOOK = /x-yourapp-signature-256/i;
 
 /** Code files git ignores (build output like functions/lib, generated bundles). Env files are kept: they're checked for leaks. */
+/** @param {string} root @param {string[]} rels @returns {Set<string>} */
 function gitIgnoredSet(root, rels) {
   if (!rels.length) return new Set();
   try {
     const out = execFileSync("git", ["check-ignore", "--stdin"], { cwd: root, input: rels.join("\n"), stdio: ["pipe", "pipe", "ignore"] });
     return new Set(out.toString().split("\n").filter(Boolean));
-  } catch (err) {
+  } catch (error) {
     // Exit 1 = nothing ignored; anything else = not a git repo or no git.
+    const err = /** @type {{ status?: number, stdout?: Buffer }} */ (error);
     return new Set(err.status === 1 ? [] : (err.stdout?.toString() ?? "").split("\n").filter(Boolean));
   }
 }
 
+/** @param {string} root @param {string} rel */
 function isGitignored(root, rel) {
   try {
     execFileSync("git", ["check-ignore", "-q", rel], { cwd: root, stdio: "ignore" });
     return true;
-  } catch (err) {
-    if (err.status === 1) return false; // git ran: not ignored
+  } catch (error) {
+    if (/** @type {{ status?: number }} */ (error).status === 1) return false; // git ran: not ignored
   }
   // Not a git repo (or no git): fall back to simple .gitignore globs.
   let lines = [];
@@ -189,12 +207,15 @@ function isGitignored(root, rel) {
 
 // ---- Static analysis ------------------------------------------------------------------
 
+/** @param {string} root @returns {Report} */
 export function analyze(root) {
   const framework = detectFramework(root);
   const all = walk(root, root);
   const ignored = gitIgnoredSet(root, all.filter((f) => !ENV_FILE.test(path.basename(f.rel))).map((f) => f.rel));
   const files = all.filter((f) => !ignored.has(f.rel));
+  /** @type {Finding[]} */
   const findings = [];
+  /** @param {string} id @param {string} file @param {number | null} line @param {string} [note] */
   const add = (id, file, line, note) => findings.push({ id, ...CHECKS[id], file, line: line ?? 1, ...(note ? { note } : {}) });
 
   // Secrets checks (ND001) cover every file; behaviour checks skip tooling.
@@ -245,6 +266,7 @@ export function analyze(root) {
   }
 
   // ND020-ND022 session creation sites
+  /** @param {string} t */
   const createsSession = (t) => /\bcreateSession\s*\(/.test(t) && !/function\s+createSession/.test(t) || (callsNorthApi(t) && /method:\s*['"]POST['"]/.test(t) && /amount/.test(t) && /(req|request)\b/.test(t));
   for (const f of server.filter((x) => createsSession(x.text))) {
     const priceFromBody = lineOf(f.text, /\b(body|req\.body|request\.body|payload|json)\??\.(amount|price|total|unitPrice|amountCents)\b/);
@@ -289,13 +311,13 @@ export function analyze(root) {
   const verifies = server.some((f) => /\/api\/sessions\/status/.test(f.text) && callsNorthApi(f.text)) || handlers.length > 0;
   if (mounts && !verifies) {
     const f = code.find((x) => /\.mount\s*\(/.test(x.text));
-    add("ND033", f.rel, lineOf(f.text, /\.mount\s*\(/));
+    if (f) add("ND033", f.rel, lineOf(f.text, /\.mount\s*\(/));
   }
 
   // ND040-ND045 webhooks
   for (const f of webhookFiles) {
     const reparsed = lineOf(f.text, /JSON\.stringify\(\s*(await\s+)?(req\.body|request\.body|body|payload|await\s+request\.json\(\))/);
-    const parsedFirst = /verifySignature\s*\(/.test(f.text) && lineOf(f.text, /request\.json\(\)/);
+    const parsedFirst = /verifySignature\s*\(/.test(f.text) ? lineOf(f.text, /request\.json\(\)/) : null;
     if (reparsed || parsedFirst) add("ND040", f.rel, reparsed ?? parsedFirst);
     if (/createHmac/.test(f.text) && HANDLES_WEBHOOK.test(f.text)) {
       const wrongKey = lineOf(f.text, /WEBHOOK_SECRET|['"`]sec_/);
@@ -336,6 +358,7 @@ export function analyze(root) {
     if (inUrl) add("ND061", f.rel, inUrl);
   }
 
+  /** @type {Record<Severity, number>} */
   const order = { error: 0, warn: 1, info: 2 };
   findings.sort((a, b) => order[a.sev] - order[b.sev] || a.id.localeCompare(b.id));
   return { framework, scanned: files.length, findings };
@@ -343,7 +366,9 @@ export function analyze(root) {
 
 // ---- Live checks (opt-in) -----------------------------------------------------------
 
+/** @param {string} root @returns {Record<string, string>} */
 function readEnv(root) {
+  /** @type {Record<string, string>} */
   const env = {};
   for (const name of [".env", ".env.local"]) {
     try {
@@ -356,13 +381,17 @@ function readEnv(root) {
   return env;
 }
 
+/** @param {string} root @param {string} origin @returns {Promise<LiveResult[]>} */
 export async function live(root, origin) {
   const env = readEnv(root);
   const key = env.NORTH_CHECKOUT_PRIVATE_KEY ?? env.CHECKOUT_PRIVATE_KEY;
   const checkoutId = env.NORTH_CHECKOUT_ID ?? env.CHECKOUT_ID;
   const profileId = env.NORTH_PROFILE_ID ?? env.PROFILE_ID;
+  /** @type {LiveResult[]} */
   const results = [];
+  /** @param {string} name @param {string} detail */
   const ok = (name, detail) => results.push({ ok: true, name, detail });
+  /** @param {string} name @param {string} detail @param {string} fix */
   const bad = (name, detail, fix) => results.push({ ok: false, name, detail, fix });
 
   const missing = [["NORTH_CHECKOUT_PRIVATE_KEY", key], ["NORTH_CHECKOUT_ID", checkoutId], ["NORTH_PROFILE_ID", profileId]].filter(([, v]) => !v).map(([n]) => n);
@@ -394,7 +423,7 @@ export async function live(root, origin) {
     token = data.token;
     ok("Create session", `HTTP ${res.status}, token issued ($1.00, nothing charged)`);
   } catch (err) {
-    bad("Create session", `request failed: ${err.message}`, "Check network access to checkout.north.com.");
+    bad("Create session", `request failed: ${err instanceof Error ? err.message : err}`, "Check network access to checkout.north.com.");
     return results;
   }
 
@@ -426,20 +455,24 @@ export async function live(root, origin) {
     if (res.ok && data?.status) ok("Session status", `HTTP ${res.status}, status "${data.status}"`);
     else bad("Session status", `HTTP ${res.status}`, "Status needs SessionToken, checkoutId (and ProfileId) headers and no Origin header.");
   } catch (err) {
-    bad("Session status", `request failed: ${err.message}`, "Check network access to checkout.north.com.");
+    bad("Session status", `request failed: ${err instanceof Error ? err.message : err}`, "Check network access to checkout.north.com.");
   }
   return results;
 }
 
 // ---- CLI ---------------------------------------------------------------------------------
 
-const color = process.stdout.isTTY
-  ? { red: (s) => `\x1b[31m${s}\x1b[39m`, yellow: (s) => `\x1b[33m${s}\x1b[39m`, cyan: (s) => `\x1b[36m${s}\x1b[39m`, green: (s) => `\x1b[32m${s}\x1b[39m`, dim: (s) => `\x1b[2m${s}\x1b[22m`, bold: (s) => `\x1b[1m${s}\x1b[22m` }
-  : Object.fromEntries(["red", "yellow", "cyan", "green", "dim", "bold"].map((k) => [k, (s) => s]));
+/** @param {string} code @param {string} reset */
+const paint = (code, reset) => (process.stdout.isTTY ? (/** @type {string} */ s) => `\x1b[${code}m${s}\x1b[${reset}m` : (/** @type {string} */ s) => s);
+const color = { red: paint("31", "39"), yellow: paint("33", "39"), cyan: paint("36", "39"), green: paint("32", "39"), dim: paint("2", "22"), bold: paint("1", "22") };
+/** @type {Record<Severity, string>} */
 const ICON = { error: color.red("✖"), warn: color.yellow("▲"), info: color.cyan("●") };
+/** @type {Record<string, string>} */
 const FRAMEWORK_NAME = { nextjs: "Next.js", express: "Express", expo: "React Native / Expo", node: "Node", unknown: "unknown" };
 
+/** @param {string[]} argv @returns {Record<string, string | true>} */
 function parseFlags(argv) {
+  /** @type {Record<string, string | true>} */
   const flags = {};
   for (let i = 0; i < argv.length; i++) {
     if (!argv[i].startsWith("--")) continue;
@@ -462,6 +495,7 @@ async function main() {
   if (flags.json) {
     console.log(JSON.stringify(report, null, 2));
   } else {
+    /** @param {Severity} sev */
     const n = (sev) => report.findings.filter((f) => f.sev === sev).length;
     console.log(`\n${color.bold("North Doctor")} ${color.dim(`· ${FRAMEWORK_NAME[report.framework]} · ${report.scanned} files scanned`)}\n`);
     for (const f of report.findings) {

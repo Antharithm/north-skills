@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-check
 /**
  * scaffold.mjs - write North Embedded Checkout starter code into a project.
  *
@@ -23,9 +24,22 @@ const TEMPLATES = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..
 
 export const SUPPORTED_FRAMEWORKS = ["nextjs", "express"];
 
-/** Template names that npm or git would mangle are stored with a leading "_". */
+/** @typedef {"new" | "existing"} Mode */
+/** @typedef {Record<string, string>} Layout  template path prefix -> project path prefix */
+/**
+ * @typedef {object} ScaffoldReport
+ * @property {string[]} written
+ * @property {string[]} skipped
+ * @property {string[]} todo
+ * @property {string} [envFile]
+ * @property {string[]} [nextSteps]
+ * @property {string[]} [skills]  filled in by create-north-app
+ */
+
+/** Template names that npm or git would mangle are stored with a leading "_". @type {Record<string, string>} */
 const RENAME = { _gitignore: ".gitignore" };
 
+/** @param {string} dir @returns {"nextjs" | "express" | "expo" | undefined} */
 export function detectFramework(dir) {
   let pkg = null;
   try {
@@ -45,13 +59,16 @@ export function detectFramework(dir) {
  * sit next to whichever the project already has. Relative imports in the templates
  * keep working because lib/ and components/ stay siblings of app/.
  */
+/** @param {string} framework @param {string} dir @param {Mode} mode @returns {Layout} */
 function layoutFor(framework, dir, mode) {
   if (mode !== "existing" || framework !== "nextjs") return {};
   const base = fs.existsSync(path.join(dir, "src", "app")) ? "src/" : "";
   return { "app/": `${base}app/`, "lib/": `${base}lib/`, "components/": `${base}components/` };
 }
 
+/** @param {string} dir @param {string} [prefix] @returns {string[]} */
 function walk(dir, prefix = "") {
+  /** @type {string[]} */
   const files = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const rel = prefix + entry.name;
@@ -61,6 +78,7 @@ function walk(dir, prefix = "") {
   return files;
 }
 
+/** @param {string} rel @param {Layout} layout */
 function targetPath(rel, layout) {
   rel = rel.replace(/\.tpl$/, "");
   const base = path.basename(rel);
@@ -69,6 +87,7 @@ function targetPath(rel, layout) {
   return rel;
 }
 
+/** @param {string} srcDir @param {string} destDir @param {Layout} layout @param {ScaffoldReport} report @param {Record<string, string>} vars */
 function copyTree(srcDir, destDir, layout, report, vars) {
   for (const rel of walk(srcDir)) {
     const to = path.join(destDir, targetPath(rel, layout));
@@ -86,6 +105,7 @@ function copyTree(srcDir, destDir, layout, report, vars) {
 }
 
 /** Add the NORTH_* section to .env.example and create an empty env file. Never touches existing values. */
+/** @param {string} templateFile @param {string} destDir @param {string} envName @param {ScaffoldReport} report */
 function mergeEnv(templateFile, destDir, envName, report) {
   const template = fs.readFileSync(templateFile, "utf8");
   const exampleTo = path.join(destDir, ".env.example");
@@ -107,9 +127,11 @@ function mergeEnv(templateFile, destDir, envName, report) {
 /**
  * Write the starter. Returns { written, skipped, todo, envFile, nextSteps }.
  * mode "new" creates destDir (must not exist); mode "existing" needs a package.json there.
+ * @param {{ framework: string | undefined, mode: Mode, destDir: string }} options
+ * @returns {ScaffoldReport & { envFile: string, nextSteps: string[] }}
  */
 export function scaffold({ framework, mode, destDir }) {
-  if (!SUPPORTED_FRAMEWORKS.includes(framework)) {
+  if (!framework || !SUPPORTED_FRAMEWORKS.includes(framework)) {
     throw new Error(`Framework "${framework}" is not supported yet. Supported: ${SUPPORTED_FRAMEWORKS.join(", ")}.`);
   }
   if (mode === "new" && fs.existsSync(destDir)) throw new Error(`${destDir} already exists.`);
@@ -119,6 +141,7 @@ export function scaffold({ framework, mode, destDir }) {
 
   const tpl = path.join(TEMPLATES, framework);
   const vars = { PROJECT_NAME: path.basename(destDir) };
+  /** @type {ScaffoldReport} */
   const report = { written: [], skipped: [], todo: [] };
   const envFile = framework === "nextjs" ? ".env.local" : ".env";
 
@@ -136,8 +159,7 @@ export function scaffold({ framework, mode, destDir }) {
         ? "npm install server-only"
         : "npm install express && npm install -D tsx @types/express";
   const cd = mode === "new" ? `cd ${path.relative(process.cwd(), destDir) || "."} && ` : "";
-  report.envFile = envFile;
-  report.nextSteps = [
+  const nextSteps = [
     cd + install,
     `Put your Sandbox credentials in ${envFile}. No North account yet? Sign up free at https://developer.north.com/register, then create a checkout at https://developer.north.com/dashboard/embedded-checkouts/designer`,
     ...report.todo,
@@ -147,12 +169,14 @@ export function scaffold({ framework, mode, destDir }) {
         ? "Render <NorthCheckout items={...} /> where your checkout button is, and replace lib/north/catalog.ts with your prices"
         : "Add app.use(northRouter) before any express.json(), call northCheckout.start() from your checkout button, and replace src/north/catalog.ts with your prices",
   ];
-  return report;
+  return { ...report, envFile, nextSteps };
 }
 
 // ---- Run directly ---------------------------------------------------------------
 
+/** @param {string[]} argv @returns {Record<string, string | true>} */
 function parseFlags(argv) {
+  /** @type {Record<string, string | true>} */
   const flags = {};
   for (let i = 0; i < argv.length; i++) {
     if (!argv[i].startsWith("--")) continue;
@@ -179,7 +203,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     if (report.skipped.length) console.log("Kept existing (not overwritten):\n" + report.skipped.map((f) => `  = ${f}`).join("\n"));
     console.log("Next:\n" + report.nextSteps.map((s, i) => `  ${i + 1}. ${s}`).join("\n"));
   } catch (err) {
-    console.error(`Error: ${err.message}`);
+    console.error(`Error: ${err instanceof Error ? err.message : err}`);
     process.exit(1);
   }
 }
