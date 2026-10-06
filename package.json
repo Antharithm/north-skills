@@ -1,0 +1,20 @@
+{
+  "name": "create-north-app",
+  "version": "0.1.0",
+  "description": "One command to start building with North: agent skills plus a wired-in Embedded Checkout starter for new or existing projects.",
+  "type": "module",
+  "bin": {
+    "create-north-app": "bin/cli.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Antharithm/north-skills.git"
+  },
+  "keywords": ["north", "payments", "embedded-checkout", "agent-skills", "claude-code", "cursor"],
+  "files": ["bin", "skills"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "sh scripts/test-installer.sh"
+  },
+  "license": "MIT"
+}
