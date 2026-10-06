@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { TOKEN_KEY } from '../../../components/north/NorthCheckout';
 
@@ -40,12 +41,25 @@ export default function ConfirmPage() {
     };
   }, []);
 
-  if (error) return <main><h1>Checkout</h1><p role="alert">{error}</p></main>;
-  if (!result) return <main><h1>Confirming your payment…</h1></main>;
+  // Class names match the starter's globals.css; restyle freely.
+  if (error) return <Result tone="bad" icon="!" title="Checkout" detail={error} />;
+  if (!result) return <Result tone="wait" icon="…" title="Confirming your payment" detail="Checking with North…" />;
+  const title = result.paid ? 'Payment confirmed' : result.orderStatus === 'review' ? 'Payment needs review' : 'Payment declined';
+  const detail = `Order ${result.orderId} · North status: ${result.status}${result.reason ? ` · ${result.reason}` : ''}`;
+  return <Result tone={result.paid ? 'ok' : 'bad'} icon={result.paid ? '✓' : '!'} title={title} detail={detail} />;
+}
+
+function Result({ tone, icon, title, detail }: { tone: 'ok' | 'bad' | 'wait'; icon: string; title: string; detail: string }) {
   return (
-    <main>
-      <h1>{result.paid ? 'Payment confirmed' : result.orderStatus === 'review' ? 'Payment needs review' : 'Payment declined'}</h1>
-      <p>Order {result.orderId} · North status: {result.status}{result.reason ? ` · ${result.reason}` : ''}</p>
+    <main className="card result">
+      <div className={`result-icon${tone === 'bad' ? ' bad' : ''}`} aria-hidden>
+        {icon}
+      </div>
+      <h1>{title}</h1>
+      <p className="muted" role={tone === 'bad' ? 'alert' : undefined}>
+        {detail}
+      </p>
+      {tone !== 'wait' && <Link href="/">Back to the store</Link>}
     </main>
   );
 }

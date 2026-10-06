@@ -67,17 +67,27 @@ export function NorthCheckout({ items, confirmPath = '/checkout/confirm' }: { it
     }
   }
 
+  // Class names are prefixed north- so they never clash with your styles. The starter's
+  // globals.css styles them; in an existing app, style them or swap in your own button.
   return (
-    <div>
+    <div className="north-checkout">
       <Script src="https://checkout.north.com/checkout.js" strategy="afterInteractive" onReady={() => setReady(true)} />
       {state !== 'mounted' && (
-        <button type="button" onClick={start} disabled={!ready || state === 'loading'}>
-          {state === 'loading' ? 'Starting…' : 'Checkout'}
+        <button type="button" className="north-pay-button" onClick={start} disabled={!ready || state === 'loading' || items.length === 0}>
+          {!ready ? 'Loading…' : state === 'loading' ? 'Starting checkout…' : 'Checkout'}
         </button>
       )}
-      {amountCents !== null && <p>Total: ${(amountCents / 100).toFixed(2)}</p>}
-      {error && <p role="alert">{error}</p>}
-      <div id={CONTAINER_ID} />
+      {amountCents !== null && (
+        <p className="north-total">
+          Charging <strong>${(amountCents / 100).toFixed(2)}</strong>
+        </p>
+      )}
+      {error && (
+        <p className="north-error" role="alert">
+          {error}
+        </p>
+      )}
+      <div id={CONTAINER_ID} className="north-form" />
     </div>
   );
 }
