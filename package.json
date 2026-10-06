@@ -1,6 +1,6 @@
 {
   "name": "create-north-app",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "One command to start building with North: agent skills plus a wired-in Embedded Checkout starter for new or existing projects.",
   "type": "module",
   "bin": {
@@ -14,7 +14,7 @@
   "files": ["bin", "skills"],
   "engines": { "node": ">=20" },
   "scripts": {
-    "test": "sh scripts/test-installer.sh"
+    "test": "sh scripts/test-installer.sh && node scripts/test-doctor.mjs"
   },
   "license": "MIT"
 }

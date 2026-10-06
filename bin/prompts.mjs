@@ -129,3 +129,43 @@ export async function confirm({ message, initial = true }) {
   if (!answer) return initial;
   return /^y(es)?$/i.test(answer);
 }
+
+// ---- Banner ---------------------------------------------------------------------
+
+const FONT = {
+  N: ["█   █", "██  █", "█ █ █", "█  ██", "█   █"],
+  O: [" ███ ", "█   █", "█   █", "█   █", " ███ "],
+  R: ["████ ", "█   █", "████ ", "█  █ ", "█   █"],
+  T: ["█████", "  █  ", "  █  ", "  █  ", "  █  "],
+  H: ["█   █", "█   █", "█████", "█   █", "█   █"],
+};
+
+/** Big block-letter word with a top-to-bottom grey gradient and a drop shadow. */
+export function banner(word = "NORTH") {
+  const color = process.stdout.isTTY && !process.env.NO_COLOR;
+  const rows = 5;
+  const grid = Array.from({ length: rows }, (_, r) => [...word].map((ch) => FONT[ch][r] + " ").join(""));
+  const width = grid[0].length + 1;
+  const filled = (r, c) => r >= 0 && r < rows && grid[r][c] === "█";
+  const shades = [255, 251, 248, 245, 242];
+  const lines = [];
+  for (let r = 0; r <= rows; r++) {
+    let line = "";
+    for (let c = 0; c < width; c++) {
+      if (filled(r, c)) line += color ? `\x1b[38;5;${shades[r]}m██\x1b[39m` : "██";
+      else if (filled(r - 1, c - 1)) line += color ? "\x1b[38;5;238m░░\x1b[39m" : "░░";
+      else line += "  ";
+    }
+    lines.push(line.replace(/\s+$/, ""));
+  }
+  return lines.join("\n");
+}
+
+/** A rounded box with a title, like an installation summary. */
+export function box(title, bodyLines) {
+  const strip = (s) => s.replace(/\x1b\[[0-9;]*m/g, "");
+  const inner = Math.max(strip(title).length + 4, ...bodyLines.map((l) => strip(l).length + 2));
+  const top = `◇  ${c.bold(title)} ${"─".repeat(Math.max(0, inner - strip(title).length - 1))}╮`;
+  const body = bodyLines.map((l) => `│  ${l}${" ".repeat(inner - strip(l).length)}│`);
+  return [top, `│${" ".repeat(inner + 2)}│`, ...body, `│${" ".repeat(inner + 2)}│`, `├${"─".repeat(inner + 2)}╯`].join("\n");
+}

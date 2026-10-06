@@ -20,7 +20,7 @@ North Embedded Checkout puts North's hosted payment form (an iframe) on your pag
 2. **Detect the framework** from `package.json` (`next` → Next.js App Router; `express` → Express). For anything else, follow the same flow with that framework's idioms.
 3. **Wire into the user's app, don't replace it.** Replace the starter `catalog.ts` with the app's real prices (database, CMS, existing product model). Render `<NorthCheckout items={...} />` (Next.js) or call `northCheckout.start()` (Express) where their cart's checkout button is. Keep their styling.
 4. **Check credentials without reading them.** Confirm the three `NORTH_*` names exist in `.env.local` / `.env` (e.g. `grep -c '^NORTH_CHECKOUT_ID=.' .env.local`). Never print the values or ask the user to paste them into chat.
-5. **Before you finish, run the invariants checklist below** against every file you touched, and run the project's typecheck.
+5. **Before you finish, run the invariants checklist below** against every file you touched, run the project's typecheck, and if `@north-doctor` is installed run `node <its-dir>/scripts/doctor.mjs` and fix anything it reports.
 6. For questions about North in general (products, accounts, pricing, going live) use `@learn-north`.
 
 ## Setup (first run in a project)
@@ -78,7 +78,7 @@ North ── POST <webhook base>/transaction (HMAC-signed) ──▶ your server
 | `checkout.js`, mount, callbacks, Domain field, iframe | `references/Frontend.md` |
 | Transaction webhook signature, dedupe, allowlisting | `references/Webhooks.md` |
 | File layout, adding to an existing app, mobile (WebView) | `references/Architecture.md` |
-| Something's broken | `references/CommonPitfalls.md` |
+| Something's broken | `@north-doctor` (runs the checks), then `references/CommonPitfalls.md` |
 | Sandbox, test cards, going live | `references/Testing.md` |
 
 ## Not covered (yet)

@@ -13,6 +13,7 @@ for fw in nextjs express; do
   d="$OUT/new-$fw"
   [ -f "$d/.claude/skills/north-embedded-checkout/SKILL.md" ] || fail "$fw: claude skill missing"
   [ -f "$d/.agents/skills/learn-north/SKILL.md" ] || fail "$fw: .agents skill missing"
+  [ -f "$d/.claude/skills/north-doctor/scripts/doctor.mjs" ] || fail "$fw: north-doctor missing"
   [ -f "$d/.env.example" ] || fail "$fw: .env.example missing"
   [ -f "$d/.gitignore" ] || fail "$fw: .gitignore missing"
   grep -q '{{' -r "$d" --include=*.json --include=*.ts --include=*.tsx --include=*.md --include=*.html && fail "$fw: unreplaced placeholder"

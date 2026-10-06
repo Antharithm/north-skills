@@ -16,7 +16,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { color as c, confirm, multiselect, select, text } from "./prompts.mjs";
+import { banner, box, color as c, confirm, multiselect, select, text } from "./prompts.mjs";
 import { detectFramework, scaffold } from "../skills/north-embedded-checkout/scripts/scaffold.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -52,8 +52,12 @@ const FRAMEWORKS = [
   { value: "swift", label: "iOS (Swift)", hint: "(coming soon)", disabled: true },
 ];
 
-/** Skills installed for each product. learn-north always comes along. */
-const SKILLS_FOR = { "embedded-checkout": ["north-embedded-checkout", "learn-north"] };
+/** Skills offered, in install order. Descriptions come from each SKILL.md, shortened. */
+const SKILLS = [
+  { value: "learn-north", label: "learn-north", hint: "(Learn about North and payments. Invoked without…)" },
+  { value: "north-embedded-checkout", label: "north-embedded-checkout", hint: "(Build or change North Embedded Checkout. Sets up…)" },
+  { value: "north-doctor", label: "north-doctor", hint: "(Diagnose and fix a North integration. Finds…)" },
+];
 
 // ---- Flags (non-interactive) -------------------------------------------------
 
@@ -77,6 +81,7 @@ Usage
 
 Flags (any you omit are asked interactively)
   --product    embedded-checkout
+  --skills     learn-north,north-embedded-checkout,north-doctor (default: all)
   --agents     claude-code,cursor,codex,gemini-cli,github-copilot,windsurf,antigravity
   --framework  nextjs | express
   --mode       new | existing
@@ -125,7 +130,9 @@ async function main() {
     if (!interactive) fail(`--${name} is required when not running in a terminal. See --help.`);
   };
 
-  console.log(`\n${c.bold("North")} ${c.dim("·")} start building with North ${c.dim(`v${VERSION}`)}\n`);
+  console.log(`\n${banner()}\n`);
+  console.log(`${c.dim("◇")}  ${c.bold("North skills")} ${c.dim(`v${VERSION} · unofficial`)}`);
+  console.log(`${c.dim("◇")}  Found ${c.green(String(SKILLS.length))} skills\n`);
 
   // 1. Product
   let product = pickValid(flags.product, PRODUCTS, "product");
@@ -134,14 +141,22 @@ async function main() {
     product = await select({ message: "What do you want to build with?", options: PRODUCTS });
   }
 
-  // 2. Agents
+  // 2. Skills (all selected by default)
+  let skills = typeof flags.skills === "string" ? flags.skills.split(",").map((x) => pickValid(x.trim(), SKILLS, "skill")) : undefined;
+  if (!skills) {
+    skills = interactive
+      ? await multiselect({ message: "Select skills to install", options: SKILLS, initial: SKILLS.map((x) => x.value) })
+      : SKILLS.map((x) => x.value);
+  }
+
+  // 3. Agents
   let agents = typeof flags.agents === "string" ? flags.agents.split(",").map((a) => pickValid(a.trim(), AGENTS, "agent")) : undefined;
   if (!agents) {
     need("agents");
     agents = await multiselect({ message: "Which AI coding agent(s) do you use?", options: AGENTS, initial: ["claude-code"] });
   }
 
-  // 3. New or existing
+  // 4. New or existing
   let mode = flags.mode;
   if (mode && !["new", "existing"].includes(mode)) fail('--mode must be "new" or "existing"');
   if (!mode) {
@@ -155,7 +170,7 @@ async function main() {
     });
   }
 
-  // 4. Where
+  // 5. Where
   let destDir;
   if (mode === "new") {
     let name = typeof flags.name === "string" ? flags.name : undefined;
@@ -182,7 +197,7 @@ async function main() {
     if (!fs.existsSync(path.join(destDir, "package.json"))) fail(`No package.json in ${destDir}. Run this from your project root or pass --dir.`);
   }
 
-  // 5. Framework (detected for existing projects, confirmed by the user)
+  // 6. Framework (detected for existing projects, confirmed by the user)
   let framework = pickValid(flags.framework, FRAMEWORKS, "framework");
   const detected = mode === "existing" ? detectFramework(destDir) : undefined;
   if (!framework) {
@@ -194,23 +209,30 @@ async function main() {
     console.log(c.yellow(`! This looks like a ${detected} project, but you picked ${framework}. Continuing as ${framework}.`));
   }
 
-  // 6. Confirm
-  const skills = SKILLS_FOR[product];
-  const agentNames = agents.map((a) => AGENTS.find((x) => x.value === a).label).join(", ");
-  console.log(
-    `\n${c.bold("Plan")}\n` +
-      `  product    ${PRODUCTS.find((p) => p.value === product).label}\n` +
-      `  framework  ${FRAMEWORKS.find((f) => f.value === framework).label}\n` +
-      `  project    ${mode === "new" ? "new" : "existing"} → ${destDir}\n` +
-      `  agents     ${agentNames}\n` +
-      `  skills     ${skills.map((s) => "/" + s).join(", ")}\n`,
-  );
-  if (!flags.yes && interactive && !(await confirm({ message: "Write these files?" }))) {
+  // 7. Summary + confirm
+  const rel = (p) => "./" + (path.relative(process.cwd(), p) || ".");
+  const byDir = new Map();
+  for (const a of agents) {
+    const { dir, label } = AGENTS.find((x) => x.value === a);
+    byDir.set(dir, [...(byDir.get(dir) ?? []), label]);
+  }
+  const summary = [];
+  for (const [dir, labels] of byDir) {
+    for (const skill of skills) {
+      summary.push(c.cyan(rel(path.join(destDir, dir, skill))));
+      summary.push(`  ${c.dim("copy →")} ${labels.join(", ")}`);
+      summary.push("");
+    }
+  }
+  summary.push(`${c.bold("Starter")}  ${PRODUCTS.find((p) => p.value === product).label} · ${FRAMEWORKS.find((f) => f.value === framework).label} · ${mode === "new" ? "new project" : "existing project"}`);
+  summary.push(`  ${c.dim("→")} ${rel(destDir)}`);
+  console.log("\n" + box("Installation Summary", summary) + "\n");
+  if (!flags.yes && interactive && !(await confirm({ message: "Proceed with installation?" }))) {
     console.log(c.dim("Nothing written."));
     return;
   }
 
-  // 7. Write
+  // 8. Write
   let report;
   try {
     report = scaffold({ framework, mode, destDir });
@@ -220,15 +242,15 @@ async function main() {
   report.skills = [];
   installSkills(skills, agents, destDir, report);
 
-  // 8. Report
+  // 9. Report
   console.log(`\n${c.green("✔")} ${c.bold("Done.")}`);
   if (report.written.length) console.log(`\n${c.bold("Wrote")}\n` + report.written.map((f) => `  ${c.green("+")} ${f}`).join("\n"));
   if (report.skipped.length) console.log(`\n${c.bold("Kept your existing files")} ${c.dim("(not overwritten)")}\n` + report.skipped.map((f) => `  ${c.yellow("=")} ${f}`).join("\n"));
-  console.log(`\n${c.bold("Skills")}\n` + report.skills.map((f) => `  ${c.cyan("◆")} ${f}`).join("\n"));
+  console.log(`\n${c.bold(`Installed ${skills.length} skill${skills.length === 1 ? "" : "s"}`)}\n` + report.skills.map((f) => `  ${c.green("✓")} ${f}`).join("\n"));
 
   const steps = [
     ...report.nextSteps,
-    `Ask your agent anything: ${c.cyan("/learn-north")} ${c.dim("or")} ${c.cyan("/north-embedded-checkout <what you want>")}`,
+    `Ask your agent: ${skills.map((x) => c.cyan("/" + x)).join(c.dim(" · "))}`,
   ];
   console.log(`\n${c.bold("Next")}\n` + steps.map((s, i) => `  ${i + 1}. ${s}`).join("\n") + "\n");
 }

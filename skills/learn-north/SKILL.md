@@ -53,6 +53,7 @@ Alternative payment methods: Apple Pay is supported on most North integrations; 
 | Add North checkout to an existing Next.js / Express app | `@north-embedded-checkout` |
 | Take payments in a mobile app | `@north-embedded-checkout` (WebView pattern in its `Architecture.md`) |
 | Verify a payment, handle webhooks | `@north-embedded-checkout` |
+| Something is broken, or review before going live | `@north-doctor` |
 | Board merchants, recurring billing, reporting, terminals | developer.north.com (skills coming soon) |
 | Accounts, Sandbox, going live, MID application | `references/GettingStarted.md` |
 | Payments vocabulary (ISV, PayFac, interchange, PCI) | `references/PaymentsBasics.md` |

@@ -67,14 +67,34 @@ NORTH_PROFILE_ID=
 |-------|-------------|
 | **north-embedded-checkout** | Build or change North Embedded Checkout: sessions, hosted form, server verification, webhooks. Sets up the project on first run. |
 | **learn-north** | Knowledge only: North's products, accounts, Sandbox, merchant applications, payments basics, Stripe-to-North mapping. |
-| **north-doctor** | *Coming next.* Diagnoses a broken integration and suggests fixes. |
+| **north-doctor** | Diagnoses a North integration: 25 checks (secrets, money, verification, webhooks, mobile), an optional live Sandbox check, and fixes. Works on any project. |
 
 ```
 /north-embedded-checkout Add checkout to my cart page
 /north-embedded-checkout Why does checkout.mount hang?
 /learn-north
 /learn-north How is North different from Stripe?
+/north-doctor
+/north-doctor My checkout form never loads
 ```
+
+## north-doctor
+
+Run `/north-doctor` (optionally with a symptom). The agent runs the checker, reads each flagged line, explains why it matters and how to fix it, and applies fixes when you say so. You can also run it yourself:
+
+```bash
+node .claude/skills/north-doctor/scripts/doctor.mjs            # report
+node .claude/skills/north-doctor/scripts/doctor.mjs --list     # all checks
+node .claude/skills/north-doctor/scripts/doctor.mjs --live     # + $1.00 Sandbox session, Domain check (asks first via the agent)
+```
+
+```
+✖ ND030  Paid decided by status === 'Approved' alone  app/api/checkout/verify/route.ts:34
+   Why: A partial approval comes back Approved with auth_resp ≠ "00" and a lower auth_amount.
+   Fix: Paid = status Approved AND auth_resp === "00" AND auth_amount equals what you charged.
+```
+
+When it can't fix something it drafts `north-support-report.md` (secrets removed) for you to review. It never sends anything.
 
 > **Tip:** Prefix your prompt with the skill name (e.g. `/north-embedded-checkout`) to load it directly.
 
@@ -124,7 +144,7 @@ Frameworks: Next.js ✅ · Express ✅ · React Native / Expo (coming soon) · i
 - **Templates live inside the skill** (`skills/north-embedded-checkout/templates`, stored as `*.tpl` so your TypeScript build never compiles them), so `npx skills add` alone is enough to scaffold.
 - **One scaffold script** (`skills/north-embedded-checkout/scripts/scaffold.mjs`) used by both the agent and `create-north-app`.
 - **Same agent paths as skills.sh:** `.claude/skills`, `.agents/skills`, `.windsurf/skills`.
-- **Tests:** `npm test` runs every installer path; `sh scripts/test-installer.sh --build` also installs, typechecks and builds the generated apps.
+- **Tests:** `npm test` runs every installer path, and plants each of the 25 doctor bugs in a clean starter to prove it's caught (and that clean starters report nothing). `sh scripts/test-installer.sh --build` also installs, typechecks and builds the generated apps.
 - **Roadmap:** see `docs/ROADMAP.md`. Generating endpoint rules from North's OpenAPI specs with a CI drift check comes once the specs are available.
 
 ## Documentation
