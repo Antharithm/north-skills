@@ -14,6 +14,13 @@ const money = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
 export default function Home() {
   const [qty, setQty] = useState<Record<string, number>>({ 'coffee-beans': 1, 'cold-brew': 0 });
+  // While North's form is showing, the cart is locked: the session was created for this exact total.
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const editCart = () => {
+    setCheckingOut(false);
+    setAttempt((a) => a + 1); // remounts NorthCheckout; the next Checkout creates a new session
+  };
   const set = (sku: string, n: number) => setQty({ ...qty, [sku]: Math.min(MAX, Math.max(0, n)) });
 
   const items = PRODUCTS.filter((p) => (qty[p.sku] ?? 0) > 0).map((p) => ({ sku: p.sku, quantity: qty[p.sku] }));
@@ -21,7 +28,7 @@ export default function Home() {
   const subtotal = lines.reduce((sum, p) => sum + p.priceCents * qty[p.sku], 0);
 
   return (
-    <main className="shop">
+    <main className={`shop${checkingOut ? ' checking-out' : ''}`}>
       <header className="shop-header">
         <span className="badge">Sandbox</span>
         <h1>Starter Store</h1>
@@ -54,7 +61,14 @@ export default function Home() {
         </section>
 
         <aside className="card summary" aria-label="Order summary">
-          <h2>Order summary</h2>
+          <div className="summary-head">
+            <h2>Order summary</h2>
+            {checkingOut && (
+              <button type="button" className="link-button" onClick={editCart}>
+                Edit cart
+              </button>
+            )}
+          </div>
           {lines.length === 0 ? (
             <p className="muted">Your cart is empty.</p>
           ) : (
@@ -73,7 +87,7 @@ export default function Home() {
             <span>Total</span>
             <strong>{money(subtotal)}</strong>
           </div>
-          <NorthCheckout items={items} />
+          <NorthCheckout key={attempt} items={items} onMount={() => setCheckingOut(true)} />
           <p className="fine-print">🔒 Card details go straight into North&apos;s secure form. They never touch this site.</p>
         </aside>
       </div>

@@ -2,7 +2,7 @@
 
 import Script from 'next/script';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // Browser side of North Embedded Checkout. UI glue only: nothing here is trusted
 // by the server. Card details are typed inside North's iframe and never touch
@@ -19,12 +19,25 @@ export interface CartItem {
 const CONTAINER_ID = 'north-checkout';
 export const TOKEN_KEY = 'northSessionToken';
 
-export function NorthCheckout({ items, confirmPath = '/checkout/confirm' }: { items: CartItem[]; confirmPath?: string }) {
+export function NorthCheckout({
+  items,
+  confirmPath = '/checkout/confirm',
+  onMount,
+}: {
+  items: CartItem[];
+  confirmPath?: string;
+  /** Called just before North's form renders, e.g. to widen your layout. */
+  onMount?: () => void;
+}) {
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const [state, setState] = useState<'idle' | 'loading' | 'mounted'>('idle');
   const [amountCents, setAmountCents] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+
+  // If this component goes away (e.g. "Edit cart"), stop listening for the old session.
+  useEffect(() => () => unsubscribeRef.current?.(), []);
 
   async function start() {
     setError(null);
@@ -53,12 +66,17 @@ export function NorthCheckout({ items, confirmPath = '/checkout/confirm' }: { it
     // 2. Register the completion callback BEFORE mounting so the event cannot be missed.
     const unsubscribe = checkout.onPaymentComplete(() => {
       unsubscribe();
+      unsubscribeRef.current = null;
       sessionStorage.setItem(TOKEN_KEY, session.token);
       router.push(confirmPath);
     });
 
+    unsubscribeRef.current = unsubscribe;
+
     // 3. Render North's hosted form. If this hangs, check the Domain field in
-    //    Checkout Designer matches this page's origin.
+    //    Checkout Designer matches this page's origin. North's iframe fills 100% of
+    //    the container's height, so the container needs one (see .north-form).
+    onMount?.();
     setState('mounted');
     try {
       await checkout.mount(session.token, CONTAINER_ID);

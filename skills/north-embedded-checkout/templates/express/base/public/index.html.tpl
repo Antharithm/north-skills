@@ -19,7 +19,11 @@
       <section aria-label="Products" class="products" id="products"></section>
 
       <aside class="card summary" aria-label="Order summary">
-        <h2>Order summary</h2>
+        <div class="summary-head">
+          <h2>Order summary</h2>
+          <!-- The session was created for this exact total, so editing the cart starts over. -->
+          <button type="button" class="link-button" id="edit" hidden onclick="location.reload()">Edit cart</button>
+        </div>
         <ul class="lines" id="lines"></ul>
         <div class="total-row"><span>Total</span><strong id="subtotal">$0.00</strong></div>
         <div class="north-checkout">
@@ -78,13 +82,18 @@
       err.hidden = true;
       e.target.disabled = true;
       e.target.textContent = 'Starting checkout…';
+      // Widen the layout first: North's iframe fills 100% of #north-checkout (see .north-form).
+      const main = document.querySelector('.shop');
+      main.classList.add('checking-out');
       try {
         const { amountCents } = await northCheckout.start({ items });
         e.target.hidden = true;
+        document.getElementById('edit').hidden = false;
         const total = document.getElementById('total');
         total.innerHTML = `Charging <strong>${money(amountCents)}</strong>`;
         total.hidden = false;
       } catch (error) {
+        main.classList.remove('checking-out');
         e.target.disabled = false;
         e.target.textContent = 'Checkout';
         err.textContent = error.message;

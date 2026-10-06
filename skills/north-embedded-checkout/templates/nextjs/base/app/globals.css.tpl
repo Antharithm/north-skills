@@ -69,7 +69,15 @@ p { margin: 0; }
 .north-total { color: var(--muted); }
 .north-error { color: var(--danger); font-size: 0.9rem; }
 .north-form:empty { display: none; }
-.north-form { border-radius: 10px; overflow: hidden; }
+/* North's iframe is height: 100% of this box, so give the box a real height. */
+.north-form { border-radius: 10px; overflow: hidden; height: clamp(640px, 82vh, 920px); }
+
+/* Checkout step: hide the product list, give North's form the full width. */
+.checking-out .products { display: none; }
+.checking-out .shop-grid { grid-template-columns: minmax(0, 1fr); max-width: 760px; }
+.checking-out .summary { position: static; }
+.summary-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.link-button { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
 
 .result { max-width: 480px; margin: 12vh auto; padding: 32px; text-align: center; display: grid; gap: 12px; justify-items: center; }
 .result-icon { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font-size: 28px; background: var(--accent-soft); color: var(--accent); }

@@ -42,7 +42,7 @@ const N = "components/north/NorthCheckout.tsx";
 const CASES = [
   // Secrets
   ["ND001", "nextjs", (d) => fs.appendFileSync(path.join(d, ".env.local"), "NEXT_PUBLIC_NORTH_CHECKOUT_PRIVATE_KEY=abc\n")],
-  ["ND002", "nextjs", (d) => edit(d, N, "import { useState } from 'react';", "import { useState } from 'react';\nimport { createSession } from '../../lib/north/client';")],
+  ["ND002", "nextjs", (d) => edit(d, N, "import { useEffect, useRef, useState } from 'react';", "import { useEffect, useRef, useState } from 'react';\nimport { createSession } from '../../lib/north/client';")],
   ["ND003", "nextjs", (d) => write(d, ".gitignore", "node_modules\n.next\n")],
   ["ND004", "nextjs", (d) => edit(d, "lib/north/client.ts", "import 'server-only';\n", "")],
   // Requests
