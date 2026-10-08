@@ -55,7 +55,12 @@ function listPrompt({ message, options, multiple = false, initial = [] }) {
         drawn = draw([`${head} ${c.cyan(chosen.map((o) => o.label).join(", "))}`], drawn);
         return;
       }
-      const help = multiple ? "↑/↓ move · space select · enter confirm" : "↑/↓ move · enter select";
+      const allPreselected = multiple && options.every((o) => o.disabled || initial.includes(o.value));
+      const help = !multiple
+        ? "↑/↓ move · enter select"
+        : allPreselected
+          ? "All selected · enter to confirm · space to unselect · ↑/↓ move"
+          : "↑/↓ move · space select · enter confirm";
       const lines = [`${head} ${c.dim(help)}`];
       options.forEach((o, i) => {
         const pointer = i === cursor ? c.cyan("›") : " ";
