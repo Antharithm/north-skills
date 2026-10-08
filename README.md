@@ -4,7 +4,7 @@
 
 Agent Skills for **North** payments, plus a one-command starter. Your AI coding agent learns North's integration rules, and you get a working **Embedded Checkout** integration in a new or existing project.
 
-Works with Claude Code, Cursor, Codex, Gemini CLI, GitHub Copilot, Windsurf, Antigravity, and any agent that supports the [Agent Skills](https://skills.sh/) standard.
+Works with Claude Code, Cursor, Codex, Gemini CLI, GitHub Copilot, Windsurf, Antigravity, OpenCode, and any agent that supports the [Agent Skills](https://skills.sh/) standard.
 
 ## Quick start
 

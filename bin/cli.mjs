@@ -48,6 +48,7 @@ const AGENTS = [
   { value: "github-copilot", label: "GitHub Copilot", dir: ".agents/skills" },
   { value: "windsurf", label: "Windsurf", dir: ".windsurf/skills" },
   { value: "antigravity", label: "Antigravity", dir: ".agents/skills" },
+  { value: "opencode", label: "OpenCode", dir: ".agents/skills" },
 ];
 
 /** @type {Option[]} */
@@ -105,7 +106,7 @@ Flags (any you omit are asked interactively)
   --product    embedded-checkout
   --skills     learn-north,north-embedded-checkout,north-doctor (default: all)
   --account    yes | no   (do you already have a North developer account?)
-  --agents     claude-code,cursor,codex,gemini-cli,github-copilot,windsurf,antigravity
+  --agents     claude-code,cursor,codex,gemini-cli,github-copilot,windsurf,antigravity,opencode
   --framework  nextjs | express
   --mode       new | existing
   --name       folder for a new project (default: north-checkout-app)
