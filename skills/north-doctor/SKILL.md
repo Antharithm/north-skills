@@ -31,6 +31,11 @@ Finds what's wrong with a North Embedded Checkout integration and says how to fi
    ```
    It confirms the credentials work and the key matches the checkout, reads the checkout **Domain** from the session token and compares it to `--origin` (the #1 cause of a hanging `mount`), and checks the status endpoint. It never prints secrets. Don't run it against production credentials without the user saying so.
 7. **Can't fix it?** Offer a support report: fill `references/SupportReport.md` into `north-support-report.md` in the project root. Remove secrets, tokens, card data, customer emails and full receipts. **Show it to the user. Never send it anywhere**: they decide whether to share it with North.
+8. **Still stuck? Reach a person (last resort).** After the checks, the fixes and the report, give the user North's contacts and let them send the report themselves:
+   - **Developer contact form:** https://developer.north.com/contact (technical questions, API keys, developer products)
+   - **Tech Support:** technicalsupport@north.com · 866.485.8999 ext 1200 · 24/7
+
+   Suggest they paste `north-support-report.md` into the message. Never send anything on their behalf.
 
 ## Never
 

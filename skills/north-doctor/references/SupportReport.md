@@ -2,6 +2,8 @@
 
 Fill this into `north-support-report.md` in the project root. Show it to the developer. **Never send it automatically.**
 
+**Where the user can send it** (they send it, you never do): the developer contact form at https://developer.north.com/contact, or Tech Support at technicalsupport@north.com (866.485.8999 ext 1200, 24/7).
+
 Remove before showing: private keys, session tokens, `.env` contents, full card numbers, customer names/emails, full processor receipts. Keep: HTTP status codes, North's error messages, check IDs, file paths.
 
 ```markdown

@@ -100,6 +100,8 @@ node .claude/skills/north-doctor/scripts/doctor.mjs --live     # + $1.00 Sandbox
 
 When it can't fix something it drafts `north-support-report.md` (secrets removed) for you to review. It never sends anything.
 
+Still stuck? As a last resort, send the report to North yourself: the [developer contact form](https://developer.north.com/contact), or Tech Support at technicalsupport@north.com (866.485.8999 ext 1200, 24/7).
+
 > **Tip:** Prefix your prompt with the skill name (e.g. `/north-embedded-checkout`) to load it directly.
 
 ## north-embedded-checkout
