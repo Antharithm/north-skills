@@ -1,6 +1,6 @@
 # North Skills
 
-> Unofficial community project. Not affiliated with or endorsed by North.
+> Unofficial community project.
 
 Agent Skills for **North** payments, plus a one-command starter. Your AI coding agent learns North's integration rules, and you get a working **Embedded Checkout** integration in a new or existing project.
 
