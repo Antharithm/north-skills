@@ -186,7 +186,8 @@ function parseFlags(argv) {
   return flags;
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+// realpath: .claude/skills/* are often symlinks to .agents/skills/*
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const flags = parseFlags(process.argv.slice(2));
   const dir = path.resolve(typeof flags.dir === "string" ? flags.dir : ".");
   if (flags.detect) {

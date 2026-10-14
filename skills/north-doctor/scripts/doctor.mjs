@@ -519,4 +519,5 @@ async function main() {
   process.exit(failed ? 1 : 0);
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();
+// realpath: .claude/skills/* are often symlinks to .agents/skills/*
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) main();
